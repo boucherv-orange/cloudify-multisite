@@ -1,0 +1,85 @@
+general:
+  general:
+    data_dir: /home/opnfv/functest/data/vIMS
+    inputs:
+      image_id: '6622878a-c762-4a88-b594-c30f255dcc06'
+      flavor_id: '17'
+      agent_user: 'cloud'
+      external_network_name: 'public'
+  cloudify:
+    blueprint:
+      url: https://github.com/boucherv-orange/cloudify-manager-blueprints.git
+      branch: 'multisite'
+    inputs:
+      keystone_username: ''
+      keystone_password: ''
+      keystone_url: 'https://identity.fr1.cloudwatt.com/v2.0'
+      manager_public_key_name: 'manager-kp'
+      agent_public_key_name: 'agent-kp'
+      image_id: '15aae49d-a8c2-47f9-ac0d-ca6cc31ef797'
+      flavor_id: '18'
+      external_network_name: 'public'
+      ssh_user: cloud
+      agents_user: cloud
+  openvpn:
+    blueprint:
+        file_name: 'openstack-blueprint.yaml'
+        name: "openvpn"
+        destination_folder: "cloudify-openvpn-blueprint"
+        url: 'https://github.com/boucherv-orange/cloudify-openvpn-blueprint.git'
+        branch: "master"
+    deployment-name: 'openvpn'
+  designate:
+    blueprint:
+        file_name: 'openstack-blueprint.yaml'
+        name: "designate"
+        destination_folder: "cloudify-designate-blueprint"
+        url: 'https://github.com/boucherv-orange/cloudify-designate-blueprint.git'
+        branch: "master"
+    deployment-name: 'designate'
+  clearwater:
+    blueprint:
+        file_name: 'openstack-blueprint.yaml'
+        name: "clearwater-opnfv"
+        destination_folder: "opnfv-cloudify-clearwater"
+        url: 'https://github.com/Orange-OpenSource/opnfv-cloudify-clearwater.git'
+        branch: "multi-site"
+    deployment-name: 'clearwater-opnfv'
+    inputs:
+        public_domain: clearwater.opnfv
+
+site:
+  site1:
+    cloudify:
+      inputs:
+        keystone_tenant_name: ''
+        management_subnet_ip: 10.67.79.0/24
+    openvpn:
+      blueprint:
+          file_name: 'openvpn_server-blueprint.yaml'
+    clearwater:
+      deployment-name: 'clearwater-opnfv-site'
+      inputs:
+          private_domain: site1.clearwater.local
+          local_site_name: site1
+          remote_site_name: site2
+  site2:
+    cloudify:
+      inputs:
+        keystone_tenant_name: ''
+        management_subnet_ip: 10.67.80.0/24
+        manager_public_key_name: 'manager-kp-2'
+        agent_public_key_name: 'agent-kp-2'
+        ssh_key_filename: ~/.ssh/cloudify-manager2-kp.pem
+        agent_private_key_path: ~/.ssh/cloudifyi-agent2-kp.pem
+    openvpn:
+      blueprint:
+          file_name: 'openvpn_client-blueprint.yaml'
+    clearwater:
+      blueprint:
+        file_name: 'openstack-blueprint_other-site.yaml'
+      deployment-name: 'clearwater-opnfv-site2'
+      inputs:
+          private_domain: site2.clearwater.local
+          local_site_name: site2
+          remote_site_name: site1
